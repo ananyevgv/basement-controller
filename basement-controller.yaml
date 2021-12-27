@@ -1,0 +1,446 @@
+substitutions:
+  devicename: cool-d1
+  upper_devicename: cool-d1
+
+esphome:
+  name: "${devicename}"
+  platform: esp32
+  board: wemos_d1_mini32
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: !secret api_pass
+
+#Включаем загрузку по воздуху
+ota:
+  password: !secret ota_pass
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+# Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${devicename} Fallback"
+    password: !secret back_pass
+captive_portal:
+
+
+i2c:
+   sda: 21 #D2
+   scl: 22 #D1
+   scan: true
+   
+#Font   
+font:
+  - file: 'font/slkscr.ttf'
+    id: font1
+    size: 8
+
+  - file: 'font/BebasNeue-Regular.ttf'
+    id: font2
+    size: 48
+
+  - file: 'font/arial.ttf'
+    id: font3
+    size: 14
+
+#Imidge
+image:
+  - file: "picture/valve-closed.png"
+    id: iclosed
+    resize: 16x16
+  - file: "picture/valve-open.png"
+    id: iopen
+    resize: 16x16
+  - file: "picture/fridge.png"
+    id: ifridge
+    resize: 16x16
+  - file: "picture/fan.png"
+    id: ifan
+    resize: 16x16
+  - file: "picture/water-alert.png"
+    id: iwater
+    resize: 16x16
+  - file: "picture/water-pump.png"
+    id: ipump
+    resize: 16x16
+
+
+
+  
+#Вывод мелодиии rtttl
+output:
+  - platform: ledc
+    pin: 27 
+    id: rtttl_out
+
+  - platform: ledc
+    pin: 5 #D8
+    id: buzzer
+    inverted: true
+
+rtttl:
+  output: rtttl_out
+
+#Описываем бинарные сенсоры
+binary_sensor:
+  - platform: template
+    lambda: |-
+          if ((id(t_indor).state - id(t_outdor).state) > 5) {
+            return true;
+          } else {
+            return false;
+          }
+    name: "raznica"
+    id: raznica
+    device_class: cold
+    on_state:
+      then:
+      - climate.control: 
+          id: Holodilnik
+          mode: "OFF"
+      - climate.control: 
+          id: Holodilnik
+          mode: "COOL"
+  
+    
+  - platform: gpio
+    pin:
+      number: 16 #D4
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "Water!"
+    device_class: moisture
+    id: water
+    on_press:
+      then:
+      - output.turn_off: buzzer
+      - switch.turn_off: led1
+    on_release:
+      then:
+        - switch.turn_off: led1
+        - output.turn_on: buzzer
+#      while:
+#        condition:
+#          binary_sensor.is_on: water
+#        then:
+#          - rtttl.play: 'The water:d=4,o=5,b=160:8p,8f#,8f#,8f#,8g'
+#    on_release:
+#      then:
+#        - rtttl.stop
+  - platform: template
+    lambda: |-
+          if (id(pump_current).state > 0) {
+            return true;
+          } else {
+            return false;
+          }
+    name: "Pump"
+    id: pump
+
+    
+#    device_class: moisture
+#Описываем реле    
+switch:
+  - platform: gpio
+    name: on-peltye
+    id: cool
+    pin: 18 #D5
+    inverted: true 
+    icon: "mdi:fridge"
+    on_turn_on:
+      - switch.turn_off: vent
+      - switch.turn_on: cool  
+    on_turn_off:
+      - switch.turn_off: cool     
+      
+  - platform: gpio
+    name: on_vent
+    id: vent
+    icon: "mdi:fan"
+    pin: 19 #D6
+    inverted: true 
+    on_turn_on:
+    - switch.turn_off: cool
+    - switch.turn_on: open_vent
+    - switch.turn_on: vent
+    on_turn_off:
+    - switch.turn_off: vent
+    - switch.turn_on: close_vent
+
+  - platform: gpio
+    name: open_vent
+    id: open_vent
+    icon: "mdi:valve-open"
+    pin: 23 #D7
+    inverted: true 
+    on_turn_on:
+    - switch.turn_off: close_vent
+    - switch.turn_on: open_vent
+    - delay: 5s
+    - switch.turn_off: open_vent
+    
+  - platform: gpio
+    name: close_vent
+    id: close_vent
+    icon: "mdi:valve-closed"
+    pin: 26 #D0
+    inverted: true 
+    on_turn_on:
+    - switch.turn_off: open_vent
+    - switch.turn_on: close_vent
+    - delay: 5s
+    - switch.turn_off: close_vent       
+    
+  - platform: gpio
+    pin:
+      number: 2 # внутрений
+      inverted: false
+    id: led1
+    
+    
+# Описываем текстовые сенсоры      
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: ${upper_devicename} IP Address
+    ssid:
+      name: ${upper_devicename} SSID
+    mac_address:
+      name: ${upper_devicename} Mac
+
+
+
+# Описываем сенсоры    
+sensor:
+#  - platform: dallas
+#    index: 0
+#    name: "Holod_T_out"
+#    id: t_outdor
+
+  - platform: wifi_signal
+    name: ${upper_devicename} Wifi
+    update_interval: 60s   
+    
+
+  - platform: esp32_hall
+    name: "Hall Sensor"
+    update_interval: 60s
+
+  - platform: bmp280
+    temperature:
+      name: "Holod_T_R"
+      id: bmp280_temperature
+      oversampling: 16x
+    pressure:
+      name: "Holod_Pressure"
+      id: bmp280_pressure
+    address: 0x77
+    update_interval: 60s
+
+  - platform: aht10
+    temperature:
+      name: "Holod_T"
+      id: t_indor
+    humidity:
+      name: "Holod_%"
+      id: H_humidity 
+    update_interval: 60s
+    address: 0x38
+
+  - platform: aht10
+    temperature:
+      name: "Outdor_T"
+      id: t_outdor
+    humidity:
+      name: "Outdor_%"
+      id: h_outdor
+    update_interval: 60s
+    address: 0x39
+
+    
+  - platform: adc
+    pin: A0
+    name: pump current
+    id: pump_current
+    filters:
+     - max:
+        window_size: 4
+        send_every: 100
+     - multiply: 3.3 
+     #5 * 0.707 / 1024;
+    update_interval: 10 ms
+    unit_of_measurement: 'A'
+    device_class: current
+    
+  - platform: template
+    name: "Altitude"
+    lambda: |-
+      const float STANDARD_SEA_LEVEL_PRESSURE = 1013.25; //in hPa, see note
+      return ((id(t_outdor).state + 273.15) / 0.0065) *
+        (powf((STANDARD_SEA_LEVEL_PRESSURE / id(bmp280_pressure).state), 0.190234) - 1); // in meter
+    update_interval: 15s
+    icon: 'mdi:signal'
+    unit_of_measurement: 'm'
+    
+  - platform: template
+    name: "Absolute Humidity"
+    lambda: |-
+      const float mw = 18.01534;    // molar mass of water g/mol
+      const float r = 8.31447215;   // Universal gas constant J/mol/K
+      return (6.112 * powf(2.718281828, (17.67 * id(t_outdor).state) /
+        (id(t_outdor).state + 243.5)) * id(h_outdor).state * mw) /
+        ((273.15 + id(t_outdor).state) * r); // in grams/m^3
+    accuracy_decimals: 2
+    update_interval: 15s
+    icon: 'mdi:water'
+    unit_of_measurement: 'g/m³'
+    
+  - platform: template
+    name: "Dew Point"
+    lambda: |-
+      return (243.5*(log(id(h_outdor).state/100)+((17.67*id(t_outdor).state)/
+      (243.5+id(t_outdor).state)))/(17.67-log(id(h_outdor).state/100)-
+      ((17.67*id(t_outdor).state)/(243.5+id(t_outdor).state))));
+    unit_of_measurement: °C
+    icon: 'mdi:thermometer-alert'
+    
+  - platform: template
+    name: "Equivalent sea level pressure"
+    lambda: |-
+      const float STANDARD_ALTITUDE = 0.6; // in meters, see note
+      return id(bmp280_pressure_m).state / powf(1 - ((0.0065 * STANDARD_ALTITUDE) /
+        (id(t_outdor).state + (0.0065 * STANDARD_ALTITUDE) + 273.15)), 5.257); // in mmHg
+    update_interval: 15s
+    unit_of_measurement: 'mmHg'    
+    
+  - platform: template
+    name: "mm gh"
+    id: bmp280_pressure_m
+    lambda: |-
+      return id(bmp280_pressure).state  * 0.750063;
+    update_interval: 15s
+    unit_of_measurement: 'mmHg'
+    icon: 'mdi:gauge'
+
+# Создаем термостат
+climate:
+  - platform: thermostat
+    id:  Holodilnik
+    min_cooling_off_time: 5s
+    min_cooling_run_time: 5s
+    min_idle_time: 5s
+    visual:
+      min_temperature: 2 °C
+      max_temperature: 7 °C
+      temperature_step: 0.5 °C
+    name: "Холодильник"
+    sensor: t_indor
+    default_target_temperature_high: 7 C
+    cool_action:
+    - if: 
+        condition:
+          lambda: return (id(t_indor).state - id(t_outdor).state) > 5;
+        then:
+          - switch.turn_on: vent
+        else: 
+          - switch.turn_on: cool
+    idle_action:
+      - switch.turn_off: vent
+      - switch.turn_off: cool
+
+#Prin to display
+display:
+  - platform: ssd1306_i2c
+    model: "SH1106 128x32"
+    reset_pin: 14
+    address: 0x3C
+    lambda: |-
+    
+      // Print time in HH:MM format
+      
+      it.strftime(2, 0, id(font3),"%H:%M",id(homeassistant_time).now());
+      if (id(cool).state) {
+        it.image(110, 0, id(ifridge));
+      }
+      if (id(vent).state) {
+        it.image(110, 16, id(ifan));
+      }
+
+      if (id(open_vent).state) {
+        it.image(96, 16, id(iopen));
+      }
+      if (id(close_vent).state) {
+        it.image(96, 0, id(iclosed));
+      }
+      if (id(water).state) {
+        it.image(0, 16, id(iwater));
+      }      
+      if (id(pump).state) {
+        it.image(16, 16, id(ipump));
+      }
+
+      if (id(t_indor).state) {
+        it.printf(40, 0, id(font3)  , "TH %.1f", id(t_indor).state);
+      }
+      if (id(t_outdor).state) {
+        it.printf(40, 13, id(font3) , "TU %.1f", id(t_outdor).state);
+      }
+
+  - platform: lcd_pcf8574
+    dimensions: 16x2
+    address: 0x27
+    lambda: |-
+      static int i = 0;
+      i++;
+      if ((i % 2) == 0)
+        it.strftime("%H:%M", id(homeassistant_time).now());
+      else
+        it.strftime("%H %M", id(homeassistant_time).now()); 
+        
+       if (id(cool).state) {
+        it.print(0, 1, "Cool");
+
+      }
+      if (id(vent).state) {
+        it.print(0, 1, "Vent");
+      }
+
+      if (id(open_vent).state) {
+        it.print(5, 1, "VOpen");
+      }
+      if (id(close_vent).state) {
+        it.print(5, 1, "VClos");
+      }
+      if (id(water).state) {
+        it.print(11, 1, "W!");
+      }      
+      if (id(pump).state) {
+        it.print(14, 1, "P!");
+      }
+
+      if (id(t_indor).state) {
+        it.printf(6, 0, "T%.1f", id(t_indor).state);
+      }
+      if (id(t_outdor).state) {
+        it.printf(12, 0, "TU %.1f", id(t_outdor).state);
+      }  
+        
+  
+
+
+     
+# Enable Web server.
+web_server:
+  port: 80
+  auth:
+    username: !secret web_user
+    password: !secret web_pass
+
+# Sync time with Home Assistant.
+time:
+  - platform: homeassistant
+    id: homeassistant_time
