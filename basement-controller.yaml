@@ -13,7 +13,7 @@ logger:
 api:
   password: !secret api_pass
 
-#Включаем загрузку по воздуху
+# Enabling air loading
 ota:
   password: !secret ota_pass
 
@@ -33,7 +33,7 @@ i2c:
    scl: 22 #D1
    scan: true
    
-#Font   
+# Font   
 font:
   - file: 'font/slkscr.ttf'
     id: font1
@@ -47,7 +47,7 @@ font:
     id: font3
     size: 14
 
-#Imidge
+# Imidge
 image:
   - file: "picture/valve-closed.png"
     id: iclosed
@@ -71,21 +71,15 @@ image:
 
 
   
-#Вывод мелодиии rtttl
+# Creating a buzzer
 output:
   - platform: ledc
-    pin: 27 
-    id: rtttl_out
-
-  - platform: ledc
-    pin: 5 #D8
+    pin: 17 #D8
     id: buzzer
-    inverted: true
 
-rtttl:
-  output: rtttl_out
 
-#Описываем бинарные сенсоры
+
+# Creating a binary sensor
 binary_sensor:
   - platform: template
     lambda: |-
@@ -117,23 +111,16 @@ binary_sensor:
     id: water
     on_press:
       then:
-      - output.turn_off: buzzer
-      - switch.turn_off: led1
+      - output.turn_on: buzzer
+      - switch.turn_on: led1
     on_release:
       then:
         - switch.turn_off: led1
-        - output.turn_on: buzzer
-#      while:
-#        condition:
-#          binary_sensor.is_on: water
-#        then:
-#          - rtttl.play: 'The water:d=4,o=5,b=160:8p,8f#,8f#,8f#,8g'
-#    on_release:
-#      then:
-#        - rtttl.stop
+        - output.turn_off: buzzer
+
   - platform: template
     lambda: |-
-          if (id(pump_current).state > 0) {
+          if (id(pump_current).state > 1) {
             return true;
           } else {
             return false;
@@ -141,15 +128,12 @@ binary_sensor:
     name: "Pump"
     id: pump
 
-    
-#    device_class: moisture
-#Описываем реле    
+# Creating a switch  
 switch:
   - platform: gpio
     name: on-peltye
     id: cool
     pin: 18 #D5
-    inverted: true 
     icon: "mdi:fridge"
     on_turn_on:
       - switch.turn_off: vent
@@ -162,7 +146,6 @@ switch:
     id: vent
     icon: "mdi:fan"
     pin: 19 #D6
-    inverted: true 
     on_turn_on:
     - switch.turn_off: cool
     - switch.turn_on: open_vent
@@ -176,7 +159,6 @@ switch:
     id: open_vent
     icon: "mdi:valve-open"
     pin: 23 #D7
-    inverted: true 
     on_turn_on:
     - switch.turn_off: close_vent
     - switch.turn_on: open_vent
@@ -188,7 +170,6 @@ switch:
     id: close_vent
     icon: "mdi:valve-closed"
     pin: 26 #D0
-    inverted: true 
     on_turn_on:
     - switch.turn_off: open_vent
     - switch.turn_on: close_vent
@@ -197,12 +178,12 @@ switch:
     
   - platform: gpio
     pin:
-      number: 2 # внутрений
+      number: 2 # internal
       inverted: false
     id: led1
     
     
-# Описываем текстовые сенсоры      
+# Creating a text sensor      
 text_sensor:
   - platform: wifi_info
     ip_address:
@@ -214,12 +195,8 @@ text_sensor:
 
 
 
-# Описываем сенсоры    
+# Creating a sensor   
 sensor:
-#  - platform: dallas
-#    index: 0
-#    name: "Holod_T_out"
-#    id: t_outdor
 
   - platform: wifi_signal
     name: ${upper_devicename} Wifi
@@ -263,18 +240,19 @@ sensor:
 
     
   - platform: adc
-    pin: A0
+    pin: SVP # A0 #36
     name: pump current
     id: pump_current
     filters:
      - max:
         window_size: 4
-        send_every: 100
+        send_every: 500
      - multiply: 3.3 
      #5 * 0.707 / 1024;
     update_interval: 10 ms
     unit_of_measurement: 'A'
     device_class: current
+
     
   - platform: template
     name: "Altitude"
@@ -326,7 +304,7 @@ sensor:
     unit_of_measurement: 'mmHg'
     icon: 'mdi:gauge'
 
-# Создаем термостат
+# Creating a thermostat
 climate:
   - platform: thermostat
     id:  Holodilnik
@@ -334,8 +312,8 @@ climate:
     min_cooling_run_time: 5s
     min_idle_time: 5s
     visual:
-      min_temperature: 2 °C
-      max_temperature: 7 °C
+      min_temperature: 5 °C
+      max_temperature: 9 °C
       temperature_step: 0.5 °C
     name: "Холодильник"
     sensor: t_indor
@@ -423,14 +401,11 @@ display:
       }
 
       if (id(t_indor).state) {
-        it.printf(6, 0, "T%.1f", id(t_indor).state);
+        it.printf(6, 0, "%.1f", id(t_indor).state);
       }
       if (id(t_outdor).state) {
-        it.printf(12, 0, "TU %.1f", id(t_outdor).state);
+        it.printf(11, 0, " %.1f", id(t_outdor).state);
       }  
-        
-  
-
 
      
 # Enable Web server.
@@ -442,5 +417,7 @@ web_server:
 
 # Sync time with Home Assistant.
 time:
-  - platform: homeassistant
+  - platform: sntp
     id: homeassistant_time
+    timezone: "MSK-3MSD,M3.5.0/2,M10.5.0/3"
+    servers: 192.168.XX.XX
