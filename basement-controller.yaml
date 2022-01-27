@@ -6,6 +6,9 @@ esphome:
   name: "${devicename}"
   platform: esp32
   board: wemos_d1_mini32
+#  platformio_options:
+#    lib_deps: 
+#    - ssilver2007/LCD_1602_RUS
 # Enable logging
 logger:
 
@@ -158,22 +161,22 @@ switch:
     name: open_vent
     id: open_vent
     icon: "mdi:valve-open"
-    pin: 23 #D7
+    pin: 26 #D0
     on_turn_on:
     - switch.turn_off: close_vent
     - switch.turn_on: open_vent
-    - delay: 5s
+    - delay: 10s
     - switch.turn_off: open_vent
     
   - platform: gpio
     name: close_vent
     id: close_vent
     icon: "mdi:valve-closed"
-    pin: 26 #D0
+    pin: 23 #D7
     on_turn_on:
     - switch.turn_off: open_vent
     - switch.turn_on: close_vent
-    - delay: 5s
+    - delay: 10s
     - switch.turn_off: close_vent       
     
   - platform: gpio
@@ -244,11 +247,10 @@ sensor:
     name: pump current
     id: pump_current
     filters:
+     - lambda: return x - 0.5;
      - max:
         window_size: 4
         send_every: 500
-     - multiply: 3.3 
-     #5 * 0.707 / 1024;
     update_interval: 10 ms
     unit_of_measurement: 'A'
     device_class: current
