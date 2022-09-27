@@ -1,0 +1,272 @@
+ubstitutions:
+  devicename: basement
+  upper_devicename: basement
+
+esphome:
+  name: "${devicename}"
+esp32:
+  board: wemos_d1_mini32
+
+logger:
+
+# Enable Home Assistant API
+api:
+  password: !secret api_pass
+
+# Enabling air loading
+ota:
+  password: !secret ota_pass
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+
+# Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${devicename} Fallback"
+    password: !secret back_pass
+captive_portal:
+
+#esp32_ble_tracker:
+
+
+i2c:
+   sda: 21 #D2
+   scl: 22 #D1
+   scan: true
+  
+
+  
+# Creating a buzzer
+output:
+  - platform: ledc
+    pin: 17 #D8
+    id: buzzer
+
+
+
+# Creating a binary sensor
+binary_sensor:
+
+  - platform: gpio
+    pin:
+      number: 16 #D4
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "Water!"
+    device_class: moisture
+    id: water
+    on_press:
+      then:
+      - output.turn_on: buzzer
+      - switch.turn_on: led1
+    on_release:
+      then:
+        - switch.turn_off: led1
+        - output.turn_off: buzzer
+
+  - platform: analog_threshold
+    name: "Pump"
+    sensor_id: pump_current
+    device_class: power
+    threshold: 1
+    id: pump
+    
+
+# Creating a switch  
+switch:
+  - platform: gpio
+    name: on-peltye
+    id: cool
+    pin: 26 #D0
+    icon: "mdi:fridge"
+    on_turn_on:
+      - switch.turn_off: vent
+      - switch.turn_on: cool
+      - switch.turn_on: close_vent
+    on_turn_off:
+      - switch.turn_off: cool     
+      
+  - platform: gpio
+    name: on_vent
+    id: vent
+    icon: "mdi:fan"
+    pin: 18 #D5
+    on_turn_on:
+    - switch.turn_off: cool
+    - switch.turn_on: open_vent
+    - switch.turn_on: vent
+    on_turn_off:
+    - switch.turn_off: vent
+
+
+  - platform: gpio
+    name: open_vent
+    id: open_vent
+    icon: "mdi:valve-open"
+    pin: 19 #D6
+    on_turn_on:
+    - switch.turn_off: close_vent
+    - switch.turn_on: open_vent
+    - delay: 10s
+    - switch.turn_off: open_vent
+    on_turn_off:
+    - switch.turn_off: open_vent
+    
+  - platform: gpio
+    name: close_vent
+    id: close_vent
+    icon: "mdi:valve-closed"
+    pin: 23 #D7
+    on_turn_on:
+    - switch.turn_off: open_vent
+    - switch.turn_on: close_vent
+    - delay: 10s
+    - switch.turn_off: close_vent       
+    on_turn_off:
+    - switch.turn_off: close_vent  
+    
+  - platform: gpio
+    pin:
+      number: 2 # internal
+      inverted: false
+    id: led1
+    
+    
+# Creating a text sensor      
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: ${upper_devicename} IP Address
+    ssid:
+      name: ${upper_devicename} SSID
+    mac_address:
+      name: ${upper_devicename} Mac
+
+
+
+# Creating a sensor   
+sensor:
+
+  - platform: wifi_signal
+    name: ${upper_devicename} Wifi
+    update_interval: 60s   
+    
+
+  - platform: esp32_hall
+    name: "Hall Sensor"
+    update_interval: 60s
+
+
+  - platform: aht10
+    temperature:
+      name: "Outdor_T"
+      id: t_outdor
+    humidity:
+      name: "Outdor_%"
+      id: H_humidity 
+    update_interval: 60s
+    address: 0x38
+
+  - platform: aht10
+    temperature:
+      name: "Holod_T"
+      id: t_indor
+    humidity:
+      name: "Holod_%"
+      id: h_outdor
+    update_interval: 60s
+    address: 0x39
+
+    
+  - platform: adc
+    pin: SVP # A0 #36
+    name: pump current
+    id: pump_current
+    filters:
+     - lambda: return x - 0.5;
+     - max:
+        window_size: 4
+        send_every: 500
+    update_interval: 10 ms
+    unit_of_measurement: 'A'
+    device_class: current
+
+    
+ 
+# Creating a thermostat
+climate:
+  - platform: thermostat
+    id:  Holodilnik
+    min_cooling_off_time: 5s
+    min_cooling_run_time: 5s
+    min_idle_time: 5s
+    visual:
+      min_temperature: 5 °C
+      max_temperature: 9 °C
+      temperature_step: 0.5 °C
+    name: "Холодильник"
+    sensor: t_indor
+    default_target_temperature_high: 7 C
+    cool_action:
+    - if: 
+        condition:
+          lambda: return (id(t_indor).state - id(t_outdor).state) > 3;
+        then:
+          - switch.turn_on: vent
+        else: 
+          - switch.turn_on: cool
+    idle_action:
+      - switch.turn_off: vent
+      - switch.turn_off: cool
+
+#Prin to display
+display:
+
+  - platform: lcd_pcf8574
+    dimensions: 16x2
+    address: 0x27
+    lambda: |-
+      static int i = 0;
+      i++;
+      if ((i % 2) == 0)
+        it.strftime("%H:%M", id(homeassistant_time).now());
+      else
+        it.strftime("%H %M", id(homeassistant_time).now()); 
+        
+       if (id(cool).state) {
+        it.print(0, 1, "Cool");
+
+      }
+      if (id(vent).state) {
+        it.print(0, 1, "Vent");
+      }
+
+      if (id(open_vent).state) {
+        it.print(5, 1, "VOpen");
+      }
+      if (id(close_vent).state) {
+        it.print(5, 1, "VClos");
+      }
+      if (id(water).state) {
+        it.print(11, 1, "W!");
+      }      
+      if (id(pump).state) {
+        it.print(14, 1, "P!");
+      }
+
+      if (id(t_indor).state) {
+        it.printf(6, 0, "%.1f", id(t_indor).state);
+      }
+      if (id(t_outdor).state) {
+        it.printf(11, 0, " %.1f", id(t_outdor).state);
+      }  
+
+
+# Sync time with Home Assistant.
+time:
+  - platform: sntp
+    id: homeassistant_time
+    timezone: "MSK-2MSD,M3.5.0/2,M10.5.0/3"
+    servers: !secret sntp
