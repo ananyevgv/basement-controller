@@ -69,8 +69,8 @@ output:
     pin: 18
     id: buzzer
 sun:
-  latitude: 57.564352°
-  longitude: 39.922012°
+  latitude: 
+  longitude: 
   
 font:
   - file: 'font/Arial.ttf'
