@@ -331,6 +331,9 @@ climate:
     idle_action:
       - switch.turn_off: vent
       - switch.turn_off: cool
+    off_mode:
+          - switch.turn_off: vent
+          - switch.turn_off: cool
 
 #Prin to display
 display:
