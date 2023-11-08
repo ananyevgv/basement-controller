@@ -177,7 +177,7 @@ binary_sensor:
       then:
         - sensor.template.publish:                                                                                                                                           
             id: pump_on                                                                                                                                                   
-            state: !lambda 'return id(homeassistant_time).now().timestamp;'
+            state: !lambda 'return id(homeassistant_time).now().timestamp'
     on_release:
       then:
         - number.set:
@@ -186,7 +186,7 @@ binary_sensor:
               return ((id(counter).state)+1);
         - sensor.template.publish:                                                                                                                                                                                                                                                                              
             id: pump_off                                                                                                                                                 
-            state: !lambda 'return id(homeassistant_time).now().timestamp;'
+            state: !lambda 'return id(homeassistant_time).now().timestamp'
 number:
   - platform: template
     name: ${name} Counter
