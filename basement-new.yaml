@@ -110,8 +110,33 @@ binary_sensor:
     name: "${name} pump"
     sensor_id: pump_current
     device_class: power
-    threshold: 1
+    threshold: 0.3
     id: pump
+    on_press:
+      then:
+        - sensor.template.publish:                                                                                                                                           
+            id: pump_on                                                                                                                                                   
+            state: !lambda 'return id(homeassistant_time).now().timestamp;'
+    on_release:
+      then:
+        - number.set:
+            id: counter
+            value: !lambda |-
+              return ((id(counter).state)+1);
+        - sensor.template.publish:                                                                                                                                                                                                                                                                              
+            id: pump_off                                                                                                                                                 
+            state: !lambda 'return id(homeassistant_time).now().timestamp;'
+number:
+  - platform: template
+    name: ${name} Counter
+    id: counter
+    update_interval: 30s
+    min_value: 0
+    max_value: 50                             
+    step: 0
+    optimistic: true 
+    initial_value: 0
+    internal: true
     
 button:
   - platform: restart
@@ -279,7 +304,31 @@ sensor:
     name: "pump current"
     id: pump_current
     update_interval: 5s
+  - platform: template
+    name: "time pump off"
+    device_class: timestamp
+    id: pump_off
+    update_interval: never
 
+  - platform: template
+    name: "time pump on"
+    device_class: timestamp
+    id: pump_on
+    update_interval: never
+
+  - platform: template
+    name: "time working pump"
+    device_class: duration
+    lambda: |-
+      return  (( id(pump_off).state  - id(pump_on).state ));
+
+  - platform: template
+    name: "pump working"
+    lambda: |-
+      return id(counter).state;
+    accuracy_decimals: 0
+    icon: mdi:counter
+    
 # Creating a thermostat
 climate:
   - platform: thermostat
@@ -354,7 +403,13 @@ time:
     id: homeassistant_time
     timezone:  Europe/Moscow #"MSK-2MSD,M3.5.0/2,M10.5.0/3"
     servers: !secret sntp
-
+    on_time: 
+      - hours: 00
+        then:
+          - number.set:
+              id: counter
+              value: 0
+              
 web_server:
   port: 80
   auth:
