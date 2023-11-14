@@ -1,4 +1,4 @@
-<img src="https://esphome.io/_images/made-for-esphome-black-on-white.svg">
+
 
 # basement-controller ESPHOME Версия 2.0
 
