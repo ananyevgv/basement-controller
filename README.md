@@ -22,5 +22,5 @@ https://github.com/syssi/esphome-apc-ups
 https://www.thingiverse.com/thing:3582642/files
 
 Корпус ZMCT103C:
-https://github.com/ananyevgv/basement-controller/ZMCT103C.stl
-https://github.com/ananyevgv/basement-controller/ZMCT103C-ver.stl
+[https://github.com/ananyevgv/basement-controller/ZMCT103C.stl](https://github.com/ananyevgv/basement-controller/blob/main/ZMCT103C-ver.stl)https://github.com/ananyevgv/basement-controller/blob/main/ZMCT103C-ver.stl
+[https://github.com/ananyevgv/basement-controller/ZMCT103C.stl](https://github.com/ananyevgv/basement-controller/blob/main/ZMCT103C.stl)https://github.com/ananyevgv/basement-controller/blob/main/ZMCT103C.stl
