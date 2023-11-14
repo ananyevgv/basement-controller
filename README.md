@@ -1,7 +1,10 @@
 # basement-controller
 Версия 2.0
 ==========
-<img src="https://github.com/ananyevgv/basement-controller/blob/main/basement.jpg" height="300" alt="Вид в нутри">
+| basement                                                  | plata                                                   | display                                    |
+|------------------------------------------------------------|-----------------------------------------------------------|--------------------------------------------|
+| ![basement](https://github.com/ananyevgv/basement-controller/blob/main/basement.jpg) | ![plata](https://github.com/ananyevgv/basement-controller/blob/main/plata.jpg) | ![display](https://github.com/ananyevgv/basement-controller/blob/main/display.jpg) |
+
 Контролер для управлением подвальным помещением.
 
 Отслеживает:
