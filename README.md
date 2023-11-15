@@ -2,6 +2,9 @@
 
 # basement-controller ESPHOME Версия 2.0
 
+<img src=("https://github.com/ananyevgv/basement-controller/blob/main/basement-v2.jpg)">
+
+
 | basement                                                  | plata                                                   | display                                    |
 |------------------------------------------------------------|-----------------------------------------------------------|--------------------------------------------|
 | ![basement](https://github.com/ananyevgv/basement-controller/blob/main/basement.jpg) | ![plata](https://github.com/ananyevgv/basement-controller/blob/main/plata.jpg) | ![display](https://github.com/ananyevgv/basement-controller/blob/main/display.jpg) |
