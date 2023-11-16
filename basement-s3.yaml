@@ -6,21 +6,26 @@
 ##  | 2|       | 3| ADC      |#|     |37|          |44| ruart    ##
 ##  | 4| reset | 5| SWpeltye |#|     |38|          |36| scl      ##
 ##  |12| clk   | 6| SWvent   |#|     |34|          |35| sca      ##
-##  |13| ds    | 7| SWopen   |#|     |21|          |18| Buzzer   ##
+##  |13| ds    | 7| SWopen   |#|     |21|          |18| AM2302   ##
 ##  |11| mosi  | 8| SWclose  |#|     |17|          |16| BiWater  ##
-##  |10| CS    | 9|          |#|     |GN|          |GN|          ## 
+##  |10| CS    | 9| Buzzer   |#|     |GN|          |GN|          ## 
 ##  |3V|       |14|          |#|     |15| led      |5V|          ##
 ###################################################################
 
 substitutions:
   name: "basement-s3"
   lastname: APC
-
+  device_description: "Контроллер подвала"
+  
 esphome:
   name: "${name}"
+  comment: "${device_description}"
   on_boot:
     then:    
       - switch.turn_on: close_vent
+  project:
+    name: esphome.basement-controller
+    version: "2.0"
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -28,11 +33,12 @@ esp32:
     type: arduino
 
 external_components:
-  - source: github://syssi/esphome-apc-ups@main
+  - source: github://ananyevgv/esphome-apc-ups
     refresh: 0s
 
 logger:
    baud_rate: 0
+   
 api:
   password: !secret api_pass
 
@@ -66,11 +72,12 @@ i2c:
 
 output:
   - platform: ledc
-    pin: 18
+    pin: 9
     id: buzzer
+
 sun:
-  latitude: 
-  longitude: 
+  latitude: 57.000000°
+  longitude: 39.000000°
   
 font:
   - file: 'font/Arial.ttf'
@@ -129,7 +136,6 @@ image:
     id: isun
     resize: 16x16
 
-
 binary_sensor:
   - platform: apc_ups
     apc_ups_id: ups0
@@ -166,18 +172,19 @@ binary_sensor:
       then:
       - light.turn_off: led
       - output.turn_off: buzzer
+
 # бинарный сенсор по току
   - platform: analog_threshold
     name: "${name} pump"
     sensor_id: pump_current
-    device_class: power
+    device_class: plug
     threshold: 0.3
     id: pump
     on_press:
       then:
         - sensor.template.publish:                                                                                                                                           
             id: pump_on                                                                                                                                                   
-            state: !lambda 'return id(homeassistant_time).now().timestamp;'
+            state: !lambda 'return id(sntp_time).now().timestamp;'
     on_release:
       then:
         - number.set:
@@ -186,7 +193,8 @@ binary_sensor:
               return ((id(counter).state)+1);
         - sensor.template.publish:                                                                                                                                                                                                                                                                              
             id: pump_off                                                                                                                                                 
-            state: !lambda 'return id(homeassistant_time).now().timestamp;'
+            state: !lambda 'return id(sntp_time).now().timestamp;'
+
 number:
   - platform: template
     name: ${name} Counter
@@ -198,12 +206,21 @@ number:
     optimistic: true 
     initial_value: 0
     internal: true
-    
+
 button:
   - platform: restart
     name: "${name} Restart"
 
 switch:
+#  - platform: apc_ups
+#    apc_ups_id: ups0
+#    quick_test:
+#      name: "${lastname} quick_test"
+#    deep_test:
+#      name: "${lastname} deep_test"
+#    ten_minutes_test:
+#      name: "${lastname} ten_minutes_test"
+
   - platform: gpio
     name: "${name} on-peltye"
     id: cool
@@ -255,12 +272,6 @@ switch:
     on_turn_off:
     - switch.turn_off: close_vent  
     
- # - platform: gpio
- #   pin:
- #     number: 15
- #     inverted: false
- #   id: led1
-
 light:
   - platform: status_led
     name: "Water Led"
@@ -285,20 +296,62 @@ text_sensor:
     apc_ups_id: ups0
     cause_of_last_transfer:
       name: "${lastname} cause of last transfer"
+      filters:
+        - substitute:
+          - "R -> неприемлемая скорость изменения напряжения сети" # unacce table utility voltage rate of change
+#          - "S -> передача по команде U или активация ИБП" #transfer due to U command or activation of UPS
+#          - "NA -> причина перевода по-прежнему недоступна" прочитайте еще раз # transfer reason still not available; read again 
+#          - "H -> высокое напряжение сети" #high utility voltage
+#          - "L -> низкое напряжение сети" #low utility voltage
+#          - "T -> скачок напряжения" #line voltage notch or spike
+          - "O -> никаких переходов с момента включения" #no transfers since turnon
     firmware_revision:
       name: "${lastname} firmware revision"
+    manufacture_date:
+      name: "${lastname} manufacture date"
+    last_battery_change_date:
+      name: "${lastname} last battery change date"
+    serial_number:
+      name: "${lastname} serial number"
+    old_firmware_version:
+      name: "${lastname}  old firmware version"
+ #   measure_upc_firmware:
+ #     name: "${lastname} measure_upc_firmware"
+ #   copyright_notice:
+ #     name: "${lastname} copyright_notice"
+    self_test_results:
+      name: "${lastname} self_test_results"
+      filters:
+        - substitute:
+          - "OK -> хорошая батарея" #good battery
+          - "BT -> произошел сбой из-за недостаточной емкости" #failed due to insufficient capacity
+          - "NG -> произошел сбой из-за перегрузки" #failed due to overload
+          - "NO -> результаты отсутствуют (за последние 5 минут тест не проводился)" # no results available (no test performed in last 5 minutes
+    alarm_delay:
+      name: "${lastname} alarm_delay"
+      filters:
+        - substitute:
+          - "0 -> Задержка в 5 секунд после отключения питания" #5 second delay after power fail
+          - "T -> Задержка в 30 секунд" #30 second delay
+          - "L -> сигнал тревоги только при низком заряде батареи" #alarm at low battery only
+          - "N -> никакой тревоги" # no alarm
+    line_quality:
+      name: "${lastname} line_quality"
+      filters:
+        - substitute:
+          - "00 -> неприемлемый" # unacceptable
+          - "FF -> приемлемый" # acceptable
 
 sensor:
   - platform: apc_ups
     apc_ups_id: ups0
     battery_voltage:
       name: "${lastname} battery voltage"
-      id: vbat
     grid_frequency:
       name: "${lastname} grid frequency"
     grid_voltage:
       name: "${lastname} grid voltage"
-      id: grid_voltage
+      id: grid_voltage       
     ac_output_voltage:
       name: "${lastname} ac output voltage"
     ac_output_load:
@@ -308,8 +361,38 @@ sensor:
       name: "${lastname} status bitmask"
     state_of_charge:
       name: "${lastname} state of charge"
+      device_class: BATTERY
     estimated_runtime:
       name: "${lastname} estimated runtime"
+    internal_temperature:
+      name: "${lastname} internal temperature"
+    ambient_temperature:
+      name: "${lastname} ambient temperature"
+    max_grid_voltage:
+      name: "${lastname} max grid voltage"
+    min_grid_voltage:
+      name: "${lastname} min grid voltage"   
+ #   ambient_humidity:
+ #     name: "${lastname} ambient humidity"
+    low_transfer_voltage:
+      name: "${lastname} low transfer voltage"
+    nominal_output_voltage:
+      name: "${lastname} nominal output voltage"
+    upper_transfer_voltage:
+      name: "${lastname} upper transfer voltage"
+    nominal_battery_voltage:
+      name: "${lastname} nominal_battery_voltage"
+    return_threshold:
+      name: "${lastname} return_threshold"
+      filters:
+        - calibrate_linear:
+           method: exact
+           datapoints:
+            - 0 -> 0
+            - 1 -> 15
+            - 2 -> 25
+            - 3 -> 90
+
 # расчет потребляемой мощности +- лапоть
   - platform: copy 
     source_id: load
@@ -364,7 +447,17 @@ sensor:
     update_interval: 60s
     address: 0x39
     i2c_id: bus_a
-
+##############################################
+  - platform: dht
+    pin: 18
+    temperature:
+      name: "${name} server Temperature"
+      id: room_t
+    humidity:
+      name: "${name} server Humidity"
+    update_interval: 5s
+    model: AM2302
+###############################################
   - platform: absolute_humidity
     name: "${name} Absolute Humidity"
     temperature: t_indor
@@ -373,6 +466,7 @@ sensor:
   - platform: adc
     pin: 3 #2
     id: adc_sensor
+
   - platform: ct_clamp
     sensor: adc_sensor
     name: "pump current"
@@ -383,6 +477,7 @@ sensor:
     name: "${name} Elevation"
     type: elevation
     id: elevation
+
   - platform: template
     name: "time pump off"
     device_class: timestamp
@@ -435,7 +530,7 @@ climate:
     off_mode:
           - switch.turn_off: vent
           - switch.turn_off: cool
-
+          
 display:
   - platform: ssd1322_spi
     model: "SSD1322 256x64"
@@ -457,7 +552,7 @@ display:
       it.image(177, 42, id(ipercent));
 
       it.printf(95, 50, id(font1),"%s", to_string(id(ip).state).c_str());
-      it.strftime(64, 0, id(font2),"%H:%M:%S", id(homeassistant_time).now());
+      it.strftime(64, 0, id(font2),"%H:%M:%S", id(sntp_time).now());
 
       if (id(t_indor).state) {
         it.printf(198, 25, id(font1), "%.1f", id(t_indor).state);
@@ -507,9 +602,10 @@ display:
         it.image(67, 35, id(iwave));
      
       it.printf(95, 31, id(font3), "%.0fv%.0f%%" , id(grid_voltage).state, id(load).state);
+
 time:
   - platform: sntp
-    id: homeassistant_time
+    id: sntp_time
     timezone: UTC-3 #Europe/Moscow
     servers: !secret sntp
     on_time: 
@@ -518,7 +614,7 @@ time:
           - number.set:
               id: counter
               value: 0
-              
+
 web_server:
   port: 80
   auth:
