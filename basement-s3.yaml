@@ -13,7 +13,7 @@
 ###################################################################
 
 substitutions:
-  name: "basement-s3"
+  name: "basement"
   lastname: APC
   device_description: "Контроллер подвала"
   
@@ -36,6 +36,9 @@ external_components:
   - source: github://ananyevgv/esphome-apc-ups
     refresh: 0s
 
+  - source: github://pr#5198
+    components: [ aht10 ]
+    
 logger:
    baud_rate: 0
    
@@ -69,6 +72,7 @@ i2c:
    scl: 36
    scan: true
    id: bus_a 
+#   frequency: 400khz
 
 output:
   - platform: ledc
@@ -76,8 +80,8 @@ output:
     id: buzzer
 
 sun:
-  latitude: 57.000000°
-  longitude: 39.000000°
+  latitude: 57.00000000°
+  longitude: 39.0000000°
   
 font:
   - file: 'font/Arial.ttf'
@@ -111,30 +115,42 @@ animation:
     resize: 24x24
 
 image:
-  - file: "picture/fridge.png"
+  - file: mdi:fridge
     id: ifridge
     resize: 24x24
-  - file: "picture/fan.png"
-    id: ifan
-    resize: 24x24
-  - file: "picture/sine-wave.png"
+  - file: mdi:sine-wave
     id: iwave
     resize: 24x24
-  - file: "picture/home-thermometer.png"
+  - file:  mdi:home-thermometer-outline
     id: ihome
     resize: 16x16
-  - file: "picture/sun-thermometer.png"
+  - file: mdi:sun-thermometer
     id: isthermometer
     resize: 16x16
-  - file: "picture/thermometer-low.png"
+  - file: mdi:thermometer-low
     id: ithermometer
     resize: 16x16
-  - file: "picture/water-percent.png"
+  - file: mdi:water-percent
     id: ipercent
     resize: 16x16
-  - file: "picture/sun.png"
+  - file: mdi:sun-wireless-outline
     id: isun
     resize: 16x16
+  - file: mdi:wifi-strength-1
+    id: i_wifi1
+    resize: 16x16 
+  - file: mdi:wifi-strength-2
+    id: i_wifi2
+    resize: 16x16
+  - file: mdi:wifi-strength-3
+    id: i_wifi3
+    resize: 16x16
+  - file: mdi:wifi-strength-4
+    id: i_wifi4
+    resize: 16x16 
+  - file: mdi:wifi-strength-off-outline
+    id: i_wifioff
+    resize: 16x16 
 
 binary_sensor:
   - platform: apc_ups
@@ -178,7 +194,7 @@ binary_sensor:
     name: "${name} pump"
     sensor_id: pump_current
     device_class: plug
-    threshold: 0.3
+    threshold: 0.2
     id: pump
     on_press:
       then:
@@ -212,15 +228,6 @@ button:
     name: "${name} Restart"
 
 switch:
-#  - platform: apc_ups
-#    apc_ups_id: ups0
-#    quick_test:
-#      name: "${lastname} quick_test"
-#    deep_test:
-#      name: "${lastname} deep_test"
-#    ten_minutes_test:
-#      name: "${lastname} ten_minutes_test"
-
   - platform: gpio
     name: "${name} on-peltye"
     id: cool
@@ -402,6 +409,8 @@ sensor:
     unit_of_measurement: "kW"
     device_class: "power"
     id: apc_power
+    accuracy_decimals: 3
+
   - platform: total_daily_energy
     name: "${lastname} Total Daily Energy"
     power_id: apc_power
@@ -420,7 +429,7 @@ sensor:
       - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
     unit_of_measurement: "%"
     entity_category: "diagnostic"
-
+    id: WiFiP
   - platform: aht10
     temperature:
       name: "${name} outdor_T"
@@ -436,7 +445,7 @@ sensor:
     name: "${name} Absolute Humidity outdor"
     temperature: t_outdor
     humidity: h_outdor
-
+###############################################
   - platform: aht10
     temperature:
       name: "${name} holod_T"
@@ -446,18 +455,17 @@ sensor:
       id: h_indor
     update_interval: 60s
     address: 0x39
-    i2c_id: bus_a
 ##############################################
   - platform: dht
     pin: 18
     temperature:
-      name: "${name} server Temperature"
-      id: room_t
+      name: "${name} server_T"
+#      id: t_indor
     humidity:
-      name: "${name} server Humidity"
-    update_interval: 5s
+      name: "${name} server_%"
+#      id: h_indor
     model: AM2302
-###############################################
+
   - platform: absolute_humidity
     name: "${name} Absolute Humidity"
     temperature: t_indor
@@ -491,17 +499,20 @@ sensor:
     update_interval: never
 
   - platform: template
-    name: "time working pump"
-    device_class: duration
-    lambda: |-
-      return  (( id(pump_off).state  - id(pump_on).state ));
-
-  - platform: template
     name: "pump working"
     lambda: |-
       return id(counter).state;
     accuracy_decimals: 0
     icon: mdi:counter
+
+  - platform: duty_time
+    id: pump_work_time
+    name: pump Work Time
+    sensor: pump
+    restore: false
+    last_time:
+      name: pump Turn-On Time
+      id: pump_turn_on_time
 
 climate:
   - platform: thermostat
@@ -586,7 +597,14 @@ display:
         id(gwater).next_frame();
         it.image(35, 4, id(gwater));
       }      
-
+      uint16_t var = (id(WiFiP).state);
+      switch (var) {
+        case 0 ... 24: it.image(177, 2, id(i_wifi1)); break;
+        case 25 ... 49: it.image(177, 2, id(i_wifi2)); break;
+        case 50 ... 74: it.image(177, 2, id(i_wifi3)); break;
+        case 75 ... 100: it.image(177, 2, id(i_wifi4)); break;
+        default: it.image(177, 2, id(i_wifioff)); break;
+      }        
       if ((id(elevation).state) > 0) {
         it.image(177, 2, id(isun));
       }
@@ -614,6 +632,7 @@ time:
           - number.set:
               id: counter
               value: 0
+          - sensor.duty_time.reset: pump_work_time
 
 web_server:
   port: 80
