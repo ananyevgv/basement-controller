@@ -84,13 +84,13 @@ sun:
   longitude: 39.0000000°
   
 font:
-  - file: 'font/Arial.ttf'
+  - file: 'font/b.ttf'
     id: font1
     size: 12
-  - file: 'font/Arial.ttf'
+  - file: 'font/b.ttf'
     id: font2
     size: 28
-  - file: 'font/Arial.ttf'
+  - file: 'font/b.ttf'
     id: font3
     size: 18
 
