@@ -37,18 +37,7 @@ i2c:
    scan: true
    
 # Font   
-font:
-  - file: 'font/slkscr.ttf'
-    id: font1
-    size: 8
 
-  - file: 'font/BebasNeue-Regular.ttf'
-    id: font2
-    size: 48
-
-  - file: 'font/arial.ttf'
-    id: font3
-    size: 14
 
 # Imidge
 image:
