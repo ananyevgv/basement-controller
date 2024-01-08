@@ -563,7 +563,21 @@ display:
       it.image(177, 42, id(ipercent));
 
       it.printf(95, 50, id(font1),"%s", to_string(id(ip).state).c_str());
-      it.strftime(64, 0, id(font2),"%H:%M:%S", id(sntp_time).now());
+      static int i = 0;
+      i++;
+      if ((i % 2) == 0) {
+        it.strftime(64, 0, id(font2),"%H:", id(sntp_time).now());
+        it.strftime(100, 0, id(font2),"%M", id(sntp_time).now());
+      }  
+      else  {
+        it.strftime(64, 0, id(font2),"%H", id(sntp_time).now());
+        it.strftime(100, 0, id(font2),"%M", id(sntp_time).now());
+      } 
+      if ((id(elevation).state) > 0) 
+        it.image(150, 2, id(isun));
+      else 
+        it.image(150, 2, id(imoon));
+
 
       if (id(t_indor).state) {
         it.printf(198, 25, id(font1), "%.1f", id(t_indor).state);
@@ -605,9 +619,7 @@ display:
         case 75 ... 100: it.image(177, 2, id(i_wifi4)); break;
         default: it.image(177, 2, id(i_wifioff)); break;
       }        
-      if ((id(elevation).state) > 0) {
-        it.image(177, 2, id(isun));
-      }
+
       if (id(pump).state) {
         id(gpump).next_frame();
         it.image(35, 35, id(gpump));
