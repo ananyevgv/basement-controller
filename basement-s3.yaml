@@ -121,6 +121,9 @@ image:
   - file: mdi:sine-wave
     id: iwave
     resize: 24x24
+  - file: mdi:weather-night
+    id: imoon
+    resize: 24x24    
   - file:  mdi:home-thermometer-outline
     id: ihome
     resize: 16x16
@@ -563,16 +566,13 @@ display:
       it.image(177, 42, id(ipercent));
 
       it.printf(95, 50, id(font1),"%s", to_string(id(ip).state).c_str());
+      
+      it.strftime(64, 0, id(font2),"%H %M", id(sntp_time).now());
       static int i = 0;
       i++;
-      if ((i % 2) == 0) {
-        it.strftime(64, 0, id(font2),"%H:", id(sntp_time).now());
-        it.strftime(100, 0, id(font2),"%M", id(sntp_time).now());
-      }  
-      else  {
-        it.strftime(64, 0, id(font2),"%H", id(sntp_time).now());
-        it.strftime(100, 0, id(font2),"%M", id(sntp_time).now());
-      } 
+      if ((i % 2) == 0) 
+        it.print(96, 0, id(font2),":");
+        
       if ((id(elevation).state) > 0) 
         it.image(150, 2, id(isun));
       else 
