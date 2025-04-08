@@ -2,6 +2,14 @@
 
 # basement-controller ESPHOME Версия 2.0
 
+[![License][license-shield]][license]
+[![ESPHome release][esphome-release-shield]][esphome-release]
+
+[license-shield]: https://img.shields.io/static/v1?label=License&message=MIT&color=orange&logo=license
+[license]: https://opensource.org/licenses/MIT
+[esphome-release-shield]: https://img.shields.io/static/v1?label=ESPHome&message=2025.3&color=green&logo=esphome
+[esphome-release]: https://GitHub.com/esphome/esphome/releases/
+
 <img src="https://github.com/ananyevgv/basement-controller/blob/main/basement-v2.jpg">
 
 
