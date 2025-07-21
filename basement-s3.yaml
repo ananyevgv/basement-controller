@@ -565,7 +565,7 @@ display:
       it.image(177, 22, id(ithermometer));
       it.image(177, 42, id(ipercent));
 
-      it.printf(95, 50, id(font1),"%s", to_string(id(ip).state).c_str());
+      it.printf(95, 50, id(font1),"%s", id(ip).state.c_str());
       
       it.strftime(64, 0, id(font2),"%H %M", id(sntp_time).now());
       static int i = 0;
