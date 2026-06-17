@@ -1,0 +1,232 @@
+#-------------------------------------------
+# Add yaml 
+#packages:
+#  apc: !include 
+#    file: packages/apc.yaml
+#    vars:
+#      TX_APC: 43
+#      RX_APC: 44
+# and copy file esphome/packages/
+#------------------------------------------- 
+#-------------------------------------------
+# external_components
+#-------------------------------------------
+external_components:
+  - source: github://samoswall/esphome-apc-ups
+    refresh: 0s
+#-------------------------------------------
+# uart
+#-------------------------------------------
+uart:
+  - id: uart_0
+    tx_pin: $TX_APC
+    rx_pin: $RX_APC
+    baud_rate: 2400 
+
+
+#-------------------------------------------
+# apc_ups
+#-------------------------------------------
+apc_ups:
+  - id: ups0
+    uart_id: uart_0
+
+#-------------------------------------------
+# binary_sensor
+#-------------------------------------------    
+binary_sensor:
+  - platform: apc_ups
+    apc_ups_id: ups0
+    runtime_calibration:
+      name: "${lastname} runtime calibration"
+  #  smart_trim:
+  #    name: "${lastname} smart trim"
+  #  smart_boost:
+  #    name: "${lastname} smart boost"
+    on_line:
+      name: "${lastname} on line"
+    on_battery:
+      name: "${lastname} on battery"
+    output_overloaded:
+      name: "${lastname} output overloaded"
+    battery_low:
+      name: "${lastname} battery low"
+    replace_battery:
+      name: "${lastname} replace battery"
+  #  smart_mode:
+  #    name: "${lastname} smart mode"
+      
+#-------------------------------------------
+# switch
+#-------------------------------------------
+switch:
+  - platform: apc_ups
+    apc_ups_id: ups0
+    front_panel_test:
+      name: "${lastname} front_panel_test"  
+    simulate_power_failure:
+      name: "${lastname} simulate power failure"
+    self_test:
+      name: "${lastname} self_test"
+    start_runtime_calibration:
+      name: "${lastname} start_runtime_calibration"
+    save_last_battery_change_date:
+      name: "${lastname} save last battery change date"
+    shutdown_with_grace_period:
+      name: "${lastname} shutdown with grace period"
+    soft_shutdown:
+      name: "${lastname} soft shutdown"
+    shutdown_immediately:
+      name: "${lastname} shutdown immediately"
+    turn_on:
+      name: "${lastname} turn on"
+
+#-------------------------------------------
+# text_sensor
+#-------------------------------------------
+text_sensor:
+  - platform: apc_ups
+    apc_ups_id: ups0
+    cause_of_last_transfer:
+      name: "${lastname} cause of last transfer"
+      filters:
+        - substitute:
+          - "R -> неприемлемая скорость изменения напряжения сети" # unacce table utility voltage rate of change
+          - "S -> передача по команде U или активация ИБП" #transfer due to U command or activation of UPS
+          - "L -> низкое напряжение сети" #low utility voltage
+#          - "NA -> причина перевода по-прежнему недоступна" прочитайте еще раз # transfer reason still not available; read again 
+#          - "H -> высокое напряжение сети" #high utility voltage
+#          - "T -> скачок напряжения" #line voltage notch or spike
+          - "O -> никаких переходов с момента включения" #no transfers since turnon
+#    firmware_revision:
+#      name: "${lastname} firmware revision"
+#    manufacture_date:
+#      name: "${lastname} manufacture date"
+    last_battery_change_date:
+      name: "${lastname} last battery change date"
+    local_identifier:
+      name: "${lastname} local identifier"
+#    serial_number:
+#      name: "${lastname} serial number"
+#    old_firmware_version:
+ #     name: "${lastname}  old firmware version"
+ #   measure_upc_firmware:
+ #     name: "${lastname} measure_upc_firmware"
+ #   copyright_notice:
+ #     name: "${lastname} copyright_notice"
+    self_test_results:
+      name: "${lastname} self_test_results"
+      filters:
+        - substitute:
+          - "OK -> хорошая батарея" #good battery
+          - "BT -> произошел сбой из-за недостаточной емкости" #failed due to insufficient capacity
+          - "NG -> произошел сбой из-за перегрузки" #failed due to overload
+          - "NO -> результаты отсутствуют (за последние 5 минут тест не проводился)" # no results available (no test performed in last 5 minutes
+   # alarm_delay:
+  #    name: "${lastname} alarm_delay"
+   #   filters:
+  #      - substitute:
+   #       - "0 -> Задержка в 5 секунд после отключения питания" #5 second delay after power fail
+   #       - "T -> Задержка в 30 секунд" #30 second delay
+   #       - "L -> сигнал тревоги только при низком заряде батареи" #alarm at low battery only
+   #       - "N -> никакой тревоги" # no alarm
+   
+    model_name:
+      name: "${lastname} model name"
+    last_battery_change_new_date:
+      name: "${lastname} last battery change new date"
+      
+    line_quality:
+      name: "${lastname} line_quality"
+      filters:
+        - substitute:
+          - "00 -> неприемлемый" # unacceptable
+          - "FF -> приемлемый" # acceptable
+
+#-------------------------------------------
+# sensor
+#-------------------------------------------
+sensor:
+  - platform: apc_ups
+    apc_ups_id: ups0
+    battery_voltage:
+      name: "${lastname} battery voltage"
+#    grid_frequency:
+#      name: "${lastname} grid frequency"
+    grid_voltage:
+      name: "${lastname} grid voltage"
+      id: grid_voltage       
+    ac_output_voltage:
+      name: "${lastname} ac output voltage"
+    ac_output_load:
+      name: "${lastname} ac output load"
+      id: load
+#    status_bitmask:
+#      name: "${lastname} status bitmask"
+    state_of_charge:
+      name: "${lastname} state of charge"
+      device_class: BATTERY
+      id: state_charge
+    estimated_runtime:
+      name: "${lastname} estimated runtime"
+    internal_temperature:
+      name: "${lastname} internal temperature"
+#    ambient_temperature:
+#      name: "${lastname} ambient temperature"
+#    max_grid_voltage:
+#      name: "${lastname} max grid voltage"
+#    min_grid_voltage:
+ #     name: "${lastname} min grid voltage"   
+ #   ambient_humidity:
+ #     name: "${lastname} ambient humidity"
+ #   low_transfer_voltage:
+ #     name: "${lastname} low transfer voltage"
+#    nominal_output_voltage:
+#     name: "${lastname} nominal output voltage"
+#    upper_transfer_voltage:
+ #     name: "${lastname} upper transfer voltage"
+    nominal_battery_voltage:
+      name: "${lastname} nominal_battery_voltage"
+    return_threshold:
+      name: "${lastname} return_threshold"
+      filters:
+        - calibrate_linear:
+           method: exact
+           datapoints:
+            - 0 -> 0
+            - 1 -> 15
+            - 2 -> 25
+            - 3 -> 90
+
+# расчет потребляемой мощности +- лапоть
+  - platform: copy 
+    source_id: load
+    name: "${lastname} power"
+    filters:
+      - lambda: return (x * 0.01);
+    unit_of_measurement: "kW"
+    device_class: power
+    id: apc_power
+    accuracy_decimals: 3
+
+  - platform: total_daily_energy
+    name: "${lastname} Total Daily Energy"
+    power_id: apc_power
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 1
+    unit_of_measurement: "kWh"
+
+#-------------------------------------------
+# datetime
+#-------------------------------------------
+datetime:
+  - platform: template
+    id: battery_date
+    type: date
+    name: Change battery date
+    optimistic: yes
+    on_value:
+      then:
+        - lambda: |-
+           id(ups0).set_last_battery_change_new_date(x.strftime("%m/%d/%y"));
