@@ -124,15 +124,15 @@ included/
 |--------|----------|------------|
 | BME688 | I2C (GPIO4, GPIO15) | Адрес 0x77 |
 | XDB401 | I2C (GPIO4, GPIO15) | Адрес 0x7F |
-| Протечка 1 | GPIO32 (1-Wire) | Удалить R23, подтянуть резистором 100Ω к GND |
-| Протечка 2 | GPIO33 (1-Wire) | Удалить R31, подтянуть резистором 100Ω к GND |
+| Протечка 1 | GPIO32 (1-Wire) | Удалить R23, R24 подтянуть резистором 100Ω к GND |
+| Протечка 2 | GPIO33 (1-Wire) | Удалить R31, R32 подтянуть резистором 100Ω к GND |
 | Ток насоса | GPIO36 (ADC) | Датчик тока ZMCT103C |
 | Кнопка реле | GPIO12 | INPUT_PULLDOWN |
 | Кнопка крана | GPIO13 | INPUT_PULLUP |
 | RS485 | GPIO27 (TX), GPIO14 (RX) | Для связи с ИБП |
 | PCF8574 (входы) | I2C (GPIO4, GPIO15) | Адрес 0x22 |
 | PCF8574 (выходы) | I2C (GPIO4, GPIO15) | Адрес 0x24 |
-| Дисплей ST7789V | SPI (GPIO18, GPIO19, GPIO23, GPIO5) | 5V питание |
+| Дисплей ST7789V | SPI (GPIO18, GPIO19, GPIO23, GPIO5) | 3.3V питание |
 
 ![UJIN](./images/KinCony%20KC868-A6-3.jpg)
 ![UJIN](./images/KinCony%20KC868-A6-4.jpg)
