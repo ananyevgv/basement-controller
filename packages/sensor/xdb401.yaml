@@ -1,0 +1,31 @@
+# -------------------------------------------
+#  Add yaml and copy file esphome/packages/sensor/
+#packages:
+#  xdb401: !include file: packages/sensor/xdb401.yaml
+
+#-------------------------------------------
+# External_components
+#-------------------------------------------
+external_components:
+  - source: github://pr#15108
+    components: [xdb401]
+    refresh: 1h
+    
+#-------------------------------------------
+# SENSOR
+#-------------------------------------------
+sensor:
+  - platform: xdb401
+    update_interval: 10s
+    temperature:
+      id:  water_t
+      name: "water temperature"
+      accuracy_decimals: 2
+    pressure_range_bar: 10
+    pressure:
+      id: water_p
+      name: "water pressure"
+      unit_of_measurement: "bar"
+      accuracy_decimals: 2
+      filters:
+        - multiply: 0.00001   # Pa -> bar
