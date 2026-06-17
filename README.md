@@ -134,3 +134,5 @@ included/
 | PCF8574 (выходы) | I2C (GPIO4, GPIO15) | Адрес 0x24 |
 | Дисплей ST7789V | SPI (GPIO18, GPIO19, GPIO23, GPIO5) | 5V питание |
 
+![UJIN](./images/KinCony%20KC868-A6-3.jpg)
+![[UJIN](./images/KinCony%20KC868-A6-4.jpg)
