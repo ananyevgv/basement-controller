@@ -92,6 +92,9 @@ ESPHome-прошивка для умного контроллера управл
 ---
 
 ## 📁 Структура проекта
+
+```text
+
 packages/
 ├── wifi.yaml # Настройки Wi-Fi
 ├── device_base.yaml # Базовая конфигурация устройства
@@ -101,3 +104,5 @@ packages/
 │ └── bme680_bsec2.yaml # Датчик BME688 (BSEC)
 included/
 ├── time.yaml # Настройки времени
+
+```
