@@ -1,0 +1,7 @@
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: UTC-3
+    servers: !secret sntp
+  #   - 0.pool.ntp.org
+     
