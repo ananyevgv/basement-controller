@@ -135,4 +135,4 @@ included/
 | Дисплей ST7789V | SPI (GPIO18, GPIO19, GPIO23, GPIO5) | 5V питание |
 
 ![UJIN](./images/KinCony%20KC868-A6-3.jpg)
-![[UJIN](./images/KinCony%20KC868-A6-4.jpg)
+![UJIN](./images/KinCony%20KC868-A6-4.jpg)
