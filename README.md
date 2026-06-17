@@ -4,7 +4,7 @@
 
 ESPHome-прошивка для умного контроллера управления водой и мониторинга в подвале с цветным TFT-дисплеем на базе платы **KinCony KC868-A6**.
 
-![KinCony](./images/KinCony KC868-A6-0.jpg)
+![KinCony](./images/KinCony%20KC868-A6-0.jpg)
 
 ---
 
