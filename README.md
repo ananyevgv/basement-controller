@@ -1,7 +1,8 @@
 
 
-# basement Water Controller ESPHOME Версия 3.0
+# basement ESPHOME Версия 3.0 (разделен на 2 контроллера  1. Water Controller 2. Fridge Controller)
 
+# Water Controller
 ESPHome-прошивка для умного контроллера управления водой и мониторинга в подвале с цветным TFT-дисплеем на базе платы **KinCony KC868-A6**.
 
 ![KinCony](./images/KinCony%20KC868-A6-0.jpg)
@@ -136,3 +137,6 @@ included/
 
 ![UJIN](./images/KinCony%20KC868-A6-3.jpg)
 ![UJIN](./images/KinCony%20KC868-A6-4.jpg)
+
+
+# Fridge Controller
