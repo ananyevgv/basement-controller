@@ -101,7 +101,9 @@ substitutions:
 esphome:
   platformio_options:
     board_build.f_flash: 80000000L
-    
+  #environment_variables:
+  #  ALL_PROXY: http://esphome:HG5hgd763kjsh@45.141.102.158:1971
+
 esp32:
   board: esp32dev
   cpu_frequency: 240MHZ
@@ -236,8 +238,8 @@ binary_sensor:
     device_class: plug
     internal: true
     pin:
-      number: 12 
-      inverted: true
+      number: 12
+
       mode: INPUT_PULLDOWN
     filters:
       - delayed_off: 10ms
