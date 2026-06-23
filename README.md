@@ -133,7 +133,7 @@ included/
 | Ток насоса | GPIO36 (ADC) | Датчик тока ZMCT103C |
 | Кнопка реле | GPIO12 | 
 | Кнопка крана | GPIO13 | 
-| RS485 | GPIO27 (TX), GPIO14 (RX) | Для связи с ИБП |
+| RS232 | GPIO27 (TX), GPIO14 (RX) | Для связи с ИБП |
 | PCF8574 (входы) | I2C (GPIO4, GPIO15) | Адрес 0x22 |
 | PCF8574 (выходы) | I2C (GPIO4, GPIO15) | Адрес 0x24 |
 | Дисплей ST7789V | SPI (GPIO18, GPIO19, GPIO23, GPIO5) | 3.3V питание |
