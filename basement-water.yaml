@@ -101,7 +101,6 @@ substitutions:
 esphome:
   platformio_options:
     board_build.f_flash: 80000000L
- 
 
 esp32:
   board: esp32dev
@@ -124,6 +123,10 @@ i2c:
   sda_pullup_enabled: False
   scl_pullup_enabled: False
   scan: true
+
+api:
+  reboot_timeout: 0s
+
   
 #-------------------------------------------
 # Packages
@@ -187,7 +190,8 @@ interval:
           or:
             - binary_sensor.is_on: leak_input0
             - binary_sensor.is_on: leak_input1
-            - binary_sensor.is_on: water
+            - binary_sensor.is_on: water_pit_distance
+            - binary_sensor.is_on: water_pit
         then:
           if:
             condition:
@@ -299,15 +303,24 @@ binary_sensor:
       - valve.close: water_valve
 
   - platform: gpio
-    name: "water!"
+    name: "water pit!"
     device_class: moisture
-    id: water
+    id: water_pit
     pin:
       pcf8574: inputs
       number: 5
       mode: INPUT
       inverted: true
 
+  - platform: analog_threshold
+    name: "water distance"
+    sensor_id: water_distance
+    device_class: moisture
+    threshold: 0.02
+    id: water_pit_distance
+    filters: 
+      - invert: 
+      
 # бинарный сенсор по току
   - platform: analog_threshold
     name: "pump"
@@ -417,6 +430,13 @@ switch:
 # SENSOR
 #-------------------------------------------
 sensor:
+  - platform: vl53l0x
+    name: "Water distance"
+    id: water_distance
+    address: 0x29
+    update_interval: 5s
+    long_range: true
+  
   - platform: homeassistant
     id: schetchik_vody
     entity_id: sensor.schetchik_vody_svd_20_0022517_pokazaniia
@@ -549,7 +569,7 @@ display:
       if ( id(leak_input0).state | id(leak_input1).state ) {
         it.image(30, 5, id(i_water_alert), red);
         }
-      if (id(water).state) {
+      if (id(water_pit).state | id(water_pit_distance).state) {
         it.image(65, 5, id(i_level), red);
         }
 
