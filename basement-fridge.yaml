@@ -1,0 +1,573 @@
+### JP1 ###
+#
+# GPIO16	RS232 TX
+# GPIO17	RS232 RX
+#
+# GND
+###########
+
+### P3 ### SSD1306
+# GND
+# 3V3
+# GPIO15	I2C SCL
+# GPIO4	  I2C SDA
+###########
+
+### P4 ###
+# 3V3
+# GND
+# GPIO15	I2C SCL
+# GPIO4	  I2C SDA
+###########
+
+############## P6 ##############
+# 3V3
+# GPIO32	1-Wire GPIO IO-1
+# GPIO33	1-Wire GPIO IO-2
+# GND
+# GPIO26	Analog output DA1
+# GPIO25	Analog output DA2
+# GND
+#################################
+
+############## P7 ##############
+# GND
+# GPIO36	Analog input A1
+# GPIO39	Analog input A2
+# GPIO34	Analog input A3
+# GPIO35	Analog input A4
+#################################
+
+########### P8 pcf8574 ###########
+# input D1
+# input D2
+# input D3
+# input D4
+# input D5
+# input D6
+# GND
+#################################
+
+### P10 ###
+# RS485 B 
+# RS485 A
+#----------
+# GPIO27 TX 
+# GPIO14 RX 
+###########
+
+### P17 ###
+# GND
+# 3V3
+# GPIO12
+# GPIO13
+###########
+
+############################### U2 LoRa ################################ ssd1322_spi
+# GND                Pin1  = GND   | 
+# MISO(SDO)  GPIO19  Pin14 = DC    | 
+# MOSI(SDI)  GPIO23  Pin5  = MOSI  | # GPIO2 
+# CLK        GPIO18  Pin4  = SCLK  | # 3V3                  Pin2  = Vcc
+# CS         GPIO5	 Pin16 = CS    | 
+# RST        GPIO21  Pin15 = RST   | 
+#                                  | # GND
+# GND                              | 
+#######################################################################
+
+############################  P2 nRF24L01 ############################# ssd1322_spi
+# GND                 Pin1  = GND  | # 3V3                  Pin2  = Vcc
+# RES? 10к 3.3В	      Pin15 = RST  | # CS    GPIO5	        Pin16 = CS
+# CLK   GPIO18        Pin4  = SCLK | # MOSI(SDI)  GPIO23    Pin5  = MOSI
+# MISO  GPIO19        Pin14 = DC   | 
+#######################################################################
+# GPIO5	  SPI CS
+# GPIO23	SPI MOSI
+# GPIO19	SPI MISO
+# GPIO18	SPI CSK
+# dss1322 Pin1 = GND, Pin2 = Vcc, Pin4 = SCLK, Pin5 = MOSI, Pin14 = DC, Pin16 = CS, Pin15 = RST (опционально),
+
+substitutions:
+  name: "basement"
+  lastname: APC
+  room: "Подвал"
+  device_description: "Контроллер подвала"
+
+
+esphome:
+  platformio_options:
+    board_build.f_flash: 80000000L
+  on_boot:
+    then:    
+      - switch.turn_on: close_vent
+
+esp32:
+  board: esp32dev
+  cpu_frequency: 240MHZ
+  framework:
+    type: esp-idf
+    advanced:
+      minimum_chip_revision: "3.1" 
+      sram1_as_iram: true
+
+
+#uart:
+  #- id: gps
+  #  tx_pin: GPIO12
+  #  rx_pin: GPIO13
+  #  baud_rate: 9600
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+  # miso_pin: GPIO19
+  # cs pin: GPIO5
+
+i2c:
+  sda: GPIO4
+  scl:
+    number: GPIO15
+    ignore_strapping_warning: true
+  sda_pullup_enabled: False
+  scl_pullup_enabled: False
+  scan: true
+
+#-------------------------------------------
+# Packages
+#------------------------------------------- 
+packages:
+  wifi: !include packages/wifi.yaml
+  device_base: !include packages/device_base.yaml
+  time: !include included/time.yaml
+  web: !include included/web.yaml
+
+#-------------------------------------------
+# PCF8574
+#-------------------------------------------
+pcf8574:
+  - id: inputs
+    address: 0x22
+  - id: outputs
+    address: 0x24
+
+#-------------------------------------------
+# BINARY SENSOR
+#-------------------------------------------
+
+binary_sensor:
+  - platform: gpio
+    name: "KC868-A6-IN-1"
+    pin:
+      pcf8574: inputs
+      number: 0
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    name: "KC868-A6-IN-2"
+    pin:
+      pcf8574: inputs
+      number: 1
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    name: "KC868-A6-IN-3"
+    pin:
+      pcf8574: inputs
+      number: 2
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    name: "KC868-A6-IN-4"
+    pin:
+      pcf8574: inputs
+      number: 3
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    name: "KC868-A6-IN-5"
+    pin:
+      pcf8574: inputs
+      number: 4
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    name: "KC868-A6-IN-6"
+    pin:
+      pcf8574: inputs
+      number: 5
+      mode: INPUT
+      inverted: true
+
+#-------------------------------------------
+# SWITCH
+#-------------------------------------------
+switch:
+  - platform: gpio
+    name: "on-peltye"
+    id: cool
+    icon: "mdi:fridge"
+    pin:
+      pcf8574: outputs
+      number: 5
+      mode: OUTPUT
+      inverted: true
+    on_turn_on:
+   #   - switch.turn_off: vent
+      - switch.turn_on: cool
+      - switch.turn_on: close_vent
+    on_turn_off:
+      - switch.turn_off: cool     
+    interlock: [vent]
+
+  - platform: gpio
+    name: "on_vent"
+    id: vent
+    icon: "mdi:fan"
+    pin:
+      pcf8574: outputs
+      number: 4
+      mode: OUTPUT
+      inverted: true
+    on_turn_on:
+ #   - switch.turn_off: cool
+    - switch.turn_on: open_vent
+    - switch.turn_on: vent
+    on_turn_off:
+    - switch.turn_on: close_vent
+    - switch.turn_off: vent
+    interlock: [cool]
+
+  - platform: gpio
+    name: "open_vent"
+    id: open_vent
+    icon: "mdi:valve-open"
+    pin:
+      pcf8574: outputs
+      number: 0
+      mode: OUTPUT
+      inverted: true
+    on_turn_on:
+ #   - switch.turn_off: close_vent
+    - switch.turn_on: open_vent
+    - switch.turn_on: open_vent1
+    - delay: 15s
+    - switch.turn_off: open_vent
+    - switch.turn_off: open_vent1
+    on_turn_off:
+    - switch.turn_off: open_vent
+    - switch.turn_off: open_vent1
+    interlock: [close_vent]
+
+  - platform: gpio
+    id: open_vent1
+    pin:
+      pcf8574: outputs
+      number: 1
+      mode: OUTPUT
+      inverted: true
+
+  - platform: gpio
+    name: "close_vent"
+    id: close_vent
+    icon: "mdi:valve-closed"
+    pin:
+      pcf8574: outputs
+      number: 2
+      mode: OUTPUT
+      inverted: true
+    on_turn_on:
+#    - switch.turn_off: open_vent
+    - switch.turn_on: close_vent
+    - switch.turn_on: close_vent1
+    - delay: 15s
+    - switch.turn_off: close_vent   
+    - switch.turn_off: close_vent1
+    on_turn_off:
+    - switch.turn_off: close_vent
+    - switch.turn_off: close_vent1
+    interlock: [open_vent]
+
+
+  - platform: gpio
+    id: close_vent1
+    pin:
+      pcf8574: outputs
+      number: 3
+      mode: OUTPUT
+      inverted: true
+
+#-------------------------------------------
+# SENSOR
+#-------------------------------------------
+sensor:
+  - platform: cg_anem
+    duct: 108mm
+    address: 0x11
+    update_interval: 1s
+    air_consumption:
+      name: "Air consumption"
+      id: air
+    ambient_temperature:
+      name: "Ambient temperature"
+    hotend_temperature:
+      name: "Hotend temperature"
+    heat_power:
+      name: "Heat power"
+    air_flow_rate:
+      name: "Air flow rate"
+    firmware_version:
+      name: "Firmware version"
+    min_air_flow_rate:
+      name: "Min air flow rate"
+    max_air_flow_rate:
+      name: "Max air flow rate"
+  
+  - platform: aht10
+    temperature:
+      name: "outdor_T"
+      id: t_outdor
+      filters:
+        - median:
+    humidity:
+      name: "outdor_%"
+      id: h_outdor
+    update_interval: 60s
+    address: 0x38
+
+  - platform: absolute_humidity
+    name: "Absolute Humidity outdor"
+    temperature: t_outdor
+    humidity: h_outdor
+
+  - platform: sht4x
+    temperature:
+      name: "holod_T"
+      id: t_indor
+    humidity:
+      name: "holod_%"
+      id: h_indor
+    update_interval: 60s
+    address: 0x44
+
+
+#-------------------------------------------
+# CLIMATE
+#-------------------------------------------
+climate:
+  - platform: thermostat
+    id:  Holodilnik
+    min_cooling_off_time: 5s
+    min_cooling_run_time: 5s
+    min_idle_time: 5s
+    visual:
+      min_temperature: 5 °C
+      max_temperature: 9 °C
+      temperature_step: 0.5 °C
+    name: "Холодильник"
+    sensor: t_indor
+    
+    cool_action:
+    - if: 
+        condition:
+          lambda: return (id(t_indor).state - id(t_outdor).state) > 3;
+        then:
+          - switch.turn_on: vent
+        else: 
+          - switch.turn_on: cool
+    idle_action:
+      - switch.turn_off: vent
+      - switch.turn_off: cool
+    off_mode:
+          - switch.turn_off: vent
+          - switch.turn_off: cool
+
+#-------------------------------------------
+# DISPLAY
+#-------------------------------------------
+display:
+  - platform: ssd1322_spi
+    model: "SSD1322 256x64"
+    #reset_pin: 21 #Pin15 = RST
+    cs_pin: 5 #34 Pin16 DSS1322
+    dc_pin: 19 #37 Pin14 DSS1322
+    lambda: |-
+      it.line(175, 40, 255, 40);
+      it.line(191, 0, 191, 63);
+      it.line(219, 0, 219, 63);
+      it.rectangle(175, 20, 255, 63);
+      it.line(0, 31, 174, 31);
+      it.line(31, 0, 31, 62);
+      it.rectangle(0, 0, 63, 63); 
+
+      it.image(198, 2, id(ihome));
+      it.image(229, 2, id(isthermometer));
+      it.image(176, 22, id(ithermometer));
+      it.image(176, 42, id(ipercent));
+
+      // it.printf(95, 50, id(font1),"%s", id(ip).state.c_str());
+
+      it.strftime(64, 0, id(font2),"%H %M", id(sntp_time).now());
+      static int i = 0;
+      i++;
+      if ((i % 2) == 0) 
+        it.print(96, 0, id(font2),":");
+
+      if (id(t_indor).state) {
+        it.printf(194, 25, id(font1), "%.1f", id(t_indor).state);
+      }
+      if (id(t_outdor).state) {
+        it.printf(220, 25, id(font1), "%.1f", id(t_outdor).state);
+      }  
+      if (id(h_indor).state) {
+        it.printf(194, 45, id(font1), "%.1f", id(h_indor).state);
+      }
+      if (id(h_outdor).state) {
+        it.printf(220, 45, id(font1), " %.1f", id(h_outdor).state);
+      }  
+        
+      if (id(cool).state) {
+        it.image(35, 4, id(ifridge));
+      }
+      if (id(vent).state) {
+        id(gfan).next_frame();
+        it.image(35, 4, id(gfan));
+      }
+      if (id(open_vent).state) {
+        id(gopen).next_frame();
+        it.image(4, 35, id(gopen));
+      }
+      if (id(close_vent).state) {
+        id(gclosed).next_frame();
+        it.image(4, 35, id(gclosed));
+      }
+    
+      uint16_t var = (id(wifi_signal_percent).state);
+      switch (var) {
+        case 0 ... 24: it.image(4, 4, id(i_wifi1)); break;
+        case 25 ... 49: it.image(4, 4, id(i_wifi2)); break;
+        case 50 ... 74: it.image(4, 4, id(i_wifi3)); break;
+        case 75 ... 100: it.image(4, 4, id(i_wifi4)); break;
+        default: it.image(4, 4, id(i_wifioff)); break;
+      }        
+
+
+#-------------------------------------------
+# TIME
+#-------------------------------------------
+time:
+  - platform: ds1307
+    id: rtc_time
+
+#-------------------------------------------
+# FONT
+#-------------------------------------------
+font:
+  - file:
+      type: gfonts
+      family: Roboto
+    id: font1
+    size: 12
+  - file:
+      type: gfonts
+      family: Roboto
+    id: font2
+    size: 28
+  - file:
+      type: gfonts
+      family: Roboto
+    id: font3
+    size: 18
+
+#-------------------------------------------
+# ANIMATION
+#-------------------------------------------
+animation:
+  - file: "picture/fan.gif"
+    id: gfan
+    resize: 24x24
+    type: BINARY
+    invert_alpha: true
+  - file: "picture/open.gif"
+    id: gopen
+    resize: 24x24  
+    type: BINARY
+    invert_alpha: true
+  - file: "picture/close.gif"
+    id: gclosed
+    resize: 24x24
+    type: BINARY
+    invert_alpha: true
+  - file: "picture/water.gif"
+    id: gwater
+    resize: 24x24    
+    type: BINARY
+  - file: "picture/pump.gif"
+    id: gpump
+    resize: 24x24
+    type: BINARY
+  - file: "picture/tower.gif"
+    id: gtower
+    resize: 24x24
+    type: BINARY
+
+#-------------------------------------------
+# IMAGE
+#-------------------------------------------
+image:
+  - file: mdi:fridge
+    id: ifridge
+    resize: 24x24
+    type: BINARY
+  - file: mdi:sine-wave
+    id: iwave
+    resize: 24x24
+    type: BINARY
+  - file: mdi:weather-night
+    id: imoon
+    resize: 24x24
+    type: BINARY
+  - file: mdi:wifi-strength-1
+    id: i_wifi1
+    resize: 24x24 
+    type: BINARY
+  - file: mdi:wifi-strength-2
+    id: i_wifi2
+    resize: 24x24
+    type: BINARY
+  - file: mdi:wifi-strength-3
+    id: i_wifi3
+    resize: 24x24
+    type: BINARY
+  - file: mdi:wifi-strength-4
+    id: i_wifi4
+    resize: 24x24 
+    type: BINARY
+  - file: mdi:wifi-strength-off-outline
+    id: i_wifioff
+    resize: 24x24
+    type: BINARY
+  - file:  mdi:home-thermometer-outline
+    id: ihome
+    resize: 16x16
+    type: BINARY
+
+
+  - file: "picture/sun.png"
+    id: isun
+    resize: 24x24
+    type: BINARY
+    invert_alpha: true
+  - file: "picture/sun-thermometer.png"
+    id: isthermometer
+    resize: 16x16
+    type: BINARY
+    invert_alpha: true
+  - file: "picture/thermometer-low.png"
+    id: ithermometer
+    resize: 15x16
+    type: BINARY
+    invert_alpha: true
+  - file: "picture/water-percent.png"
+    id: ipercent
+    resize: 15x16
+    type: BINARY
+    invert_alpha: true
