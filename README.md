@@ -1,4 +1,11 @@
 
+[![License][license-shield]][license]
+[![ESPHome release][esphome-release-shield]][esphome-release]
+
+[license-shield]: https://img.shields.io/static/v1?label=License&message=MIT&color=orange&logo=license
+[license]: https://opensource.org/licenses/MIT
+[esphome-release-shield]: https://img.shields.io/github/v/release/esphome/esphome?label=ESPHome&color=green&logo=esphome
+[esphome-release]: https://esphome.io/
 
 # basement ESPHOME Версия 3.0 
 разделен на 2 контроллера, переведены на KinCony KC868-A6
@@ -143,3 +150,6 @@ included/
 
 
 # Fridge Controller
+
+⭐ Поддержать проект
+Если проект оказался полезным — поставьте ⭐ на GitHub!
